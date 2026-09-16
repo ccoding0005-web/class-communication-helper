@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>수업 소통 도우미</title>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Arial,"Noto Sans KR",sans-serif;background:#f6f7fb;color:#222}
+  .wrap{max-width:1100px;margin:0 auto;padding:28px 20px}
+  header{background:#fff;border-radius:22px;padding:24px 28px;box-shadow:0 4px 18px #00000010;margin-bottom:18px}
+  h1{margin:0 0 8px;font-size:32px}
+  .sub{font-size:18px;color:#666}
+  .tabs{display:flex;gap:10px;margin:18px 0}
+  .tab{flex:1;border:0;border-radius:16px;padding:17px;font-size:20px;font-weight:700;background:#e5e7eb;cursor:pointer}
+  .tab.active{background:#222;color:white}
+  .panel{background:white;border-radius:22px;padding:24px;box-shadow:0 4px 18px #00000010}
+  .hidden{display:none}
+  label{display:block;font-size:18px;font-weight:700;margin-bottom:8px}
+  select,input{width:100%;padding:16px;border:2px solid #ddd;border-radius:14px;font-size:19px;margin-bottom:18px}
+  .request-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+  .request{min-height:130px;border:0;border-radius:20px;background:#eef2ff;font-size:27px;font-weight:800;cursor:pointer;padding:20px}
+  .request:hover{transform:translateY(-2px)}
+  .request small{display:block;font-size:16px;margin-top:9px;font-weight:500;color:#666}
+  .custom{display:flex;gap:10px;margin-top:18px}
+  .custom input{margin:0}
+  .send{border:0;border-radius:14px;padding:0 22px;font-size:18px;font-weight:700;background:#222;color:#fff;cursor:pointer}
+  .title-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+  .count{font-size:18px;font-weight:700}
+  .empty{text-align:center;padding:55px 10px;color:#777;font-size:21px}
+  .card{border:2px solid #e7e7e7;border-radius:18px;padding:18px;margin-bottom:12px;display:flex;justify-content:space-between;gap:15px;align-items:center}
+  .student{font-weight:800;font-size:17px}
+  .message{font-size:25px;font-weight:800;margin-top:7px}
+  .time{font-size:14px;color:#888;margin-top:6px}
+  .confirm{border:0;border-radius:13px;padding:14px 18px;background:#222;color:#fff;font-size:17px;font-weight:700;cursor:pointer;white-space:nowrap}
+  .clear{border:1px solid #bbb;background:white;color:#333;border-radius:12px;padding:10px 14px;cursor:pointer}
+  .notice{margin-top:18px;padding:14px 16px;background:#fff8dc;border-radius:13px;font-size:16px;line-height:1.5}
+  @media(max-width:700px){h1{font-size:27px}.request-grid{grid-template-columns:1fr}.card{align-items:flex-start;flex-direction:column}.confirm{width:100%}.custom{flex-direction:column}.send{height:54px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>수업 소통 도우미</h1>
+    <div class="sub">말 대신 버튼을 눌러 선생님에게 필요한 도움을 알려주세요.</div>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" id="studentTab">학생 화면</button>
+    <button class="tab" id="teacherTab">선생님 화면</button>
+  </div>
+
+  <section class="panel" id="studentPanel">
+    <label for="studentName">학생 이름</label>
+    <select id="studentName">
+      <option>학생 1</option><option>학생 2</option><option>학생 3</option>
+      <option>학생 4</option><option>학생 5</option><option>학생 6</option>
+      <option>학생 7</option><option>학생 8</option><option>학생 9</option>
+      <option>학생 10</option>
+    </select>
+
+    <div class="request-grid">
+      <button class="request" data-msg="천천히 말해주세요">천천히 말해주세요<small>말하는 속도를 조금 늦춰주세요.</small></button>
+      <button class="request" data-msg="다시 설명해주세요">다시 설명해주세요<small>한 번 더 설명해주세요.</small></button>
+      <button class="request" data-msg="질문 있어요">질문 있어요<small>선생님께 질문하고 싶어요.</small></button>
+      <button class="request" data-msg="도움이 필요해요">도움이 필요해요<small>도와주세요.</small></button>
+      <button class="request" data-msg="잘 모르겠어요">잘 모르겠어요<small>무엇을 해야 할지 모르겠어요.</small></button>
+      <button class="request" data-msg="잠깐 기다려주세요">잠깐 기다려주세요<small>조금만 기다려주세요.</small></button>
+    </div>
+
+    <div class="custom">
+      <input id="customMsg" maxlength="40" placeholder="직접 요청을 입력할 수 있어요">
+      <button class="send" id="sendCustom">보내기</button>
+    </div>
+    <div class="notice">요청을 누르면 선생님 화면에 바로 표시됩니다. 같은 기기에서 화면을 전환해 테스트할 수 있어요.</div>
+  </section>
+
+  <section class="panel hidden" id="teacherPanel">
+    <div class="title-row">
+      <div class="count" id="count">새 요청 0개</div>
+      <button class="clear" id="clearAll">모두 확인</button>
+    </div>
+    <div id="requests"></div>
+  </section>
+</div>
+
+<script>
+let requests = JSON.parse(localStorage.getItem("classRequests") || "[]");
+
+const studentPanel=document.getElementById("studentPanel");
+const teacherPanel=document.getElementById("teacherPanel");
+const studentTab=document.getElementById("studentTab");
+const teacherTab=document.getElementById("teacherTab");
+const requestsEl=document.getElementById("requests");
+const countEl=document.getElementById("count");
+
+function save(){localStorage.setItem("classRequests",JSON.stringify(requests)); render();}
+
+function addRequest(message){
+  const student=document.getElementById("studentName").value;
+  requests.unshift({id:Date.now(),student,message,time:new Date().toLocaleTimeString("ko-KR",{hour:"2-digit",minute:"2-digit"})});
+  save();
+  alert("선생님에게 요청을 보냈어요.");
+}
+
+document.querySelectorAll(".request").forEach(btn=>{
+  btn.addEventListener("click",()=>addRequest(btn.dataset.msg));
+});
+
+document.getElementById("sendCustom").addEventListener("click",()=>{
+  const input=document.getElementById("customMsg");
+  const msg=input.value.trim();
+  if(!msg){alert("요청 내용을 입력해주세요."); input.focus(); return;}
+  addRequest(msg); input.value="";
+});
+
+document.getElementById("customMsg").addEventListener("keydown",e=>{
+  if(e.key==="Enter") document.getElementById("sendCustom").click();
+});
+
+function render(){
+  countEl.textContent=`새 요청 ${requests.length}개`;
+  if(!requests.length){
+    requestsEl.innerHTML='<div class="empty">현재 들어온 요청이 없습니다.<br>학생이 요청을 보내면 여기에 표시됩니다.</div>';
+    return;
+  }
+  requestsEl.innerHTML=requests.map(r=>`
+    <div class="card">
+      <div>
+        <div class="student">${r.student}</div>
+        <div class="message">${escapeHtml(r.message)}</div>
+        <div class="time">${r.time}</div>
+      </div>
+      <button class="confirm" onclick="confirmRequest(${r.id})">확인했어요</button>
+    </div>
+  `).join("");
+}
+function confirmRequest(id){
+  requests=requests.filter(r=>r.id!==id); save();
+}
+document.getElementById("clearAll").addEventListener("click",()=>{
+  requests=[]; save();
+});
+
+function escapeHtml(s){
+  return s.replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
+}
+
+function show(mode){
+  const student=mode==="student";
+  studentPanel.classList.toggle("hidden",!student);
+  teacherPanel.classList.toggle("hidden",student);
+  studentTab.classList.toggle("active",student);
+  teacherTab.classList.toggle("active",!student);
+  if(!student) render();
+}
+studentTab.onclick=()=>show("student");
+teacherTab.onclick=()=>show("teacher");
+
+window.addEventListener("storage",()=>{requests=JSON.parse(localStorage.getItem("classRequests")||"[]");render();});
+render();
+</script>
+</body>
+</html>
